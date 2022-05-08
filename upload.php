@@ -19,55 +19,88 @@ $config = [
     'lang' => 'de',
     'uploads' => '/home/eressea/www/eressea/files',
     'dbname' => 'orders.db',
-    'password' => NULL,
-//    'password' => password_hash('eressea'),
 ];
-header('Content-Type: text/plain; charset=utf-8');
 $email = NULL;
 $game = filter_input(INPUT_POST, 'game', FILTER_VALIDATE_INT, ['options' => ['default' => $config['game'], 'min_range' => 1]]);
 $lang = filter_input(INPUT_POST, 'lang', FILTER_SANITIZE_STRING, ['options' => ['default' => $config['lang'], 'flags' => FILTER_REQUIRE_SCALAR]]);
-$password = filter_input(INPUT_POST, 'password', FILTER_SANITIZE_STRING, FILTER_REQUIRE_SCALAR);
-$pwhash = $config['password'];
 
-if (!is_null($pwhash) && !password_verify($password, $pwhash)) {
-    echo "Permission denied\n";
-    header('HTTP/1.0 403 Permission denied');
-    exit();
-}
+class Uploader
+{
+    private $config;
+    private $game;
 
-$upload_dir = $config['uploads'] . '/game-' . $game;
-$dbfile = $upload_dir . '/' . $config['dbname'];
-if (!file_exists($dbfile)) {
-    echo "database not found: $dbfile\n";
-    exit();
-}
-$dbsource = 'sqlite:' . $dbfile;
-$time = new DateTime();
-if (isset($_FILES['input'])) {
-    $tmp_name = $_FILES['input']['tmp_name'];
-    $input = file_get_contents($tmp_name);
-    $encoding = mb_detect_encoding($input, ['ASCII', 'UTF-8']);
-    if (FALSE === $encoding) {
-        echo "Please convert your file to UTF-8\n";
-        header('HTTP/1.0 406 Not Acceptable');
-        exit();
+    public function __construct(array $config, int $game)
+    {
+        $this->config = $config;
+        $this->game = $game;
     }
-    $filename = tempnam($upload_dir . '/uploads', 'upload-');
-    if ($filename) {
+
+    protected static function response(int $status = 200, $message = NULL, array $body = NULL)
+    {
+        return (object)array(
+            'status' => $status,
+            'message' => $message,
+            'body' => $body,
+        );
+    }
+
+    public function store(string $tmp_name, string $lang, string $email = NULL)
+    {
+        $input = file_get_contents($tmp_name);
+        $encoding = mb_detect_encoding($input, ['ASCII', 'UTF-8']);
+        if (FALSE === $encoding) {
+            $body = array('errors' => array('input must be a UTF-8 file'));
+            return self::response(406, 'Not Acceptable', $body);
+        }
+        $upload_dir = $config['uploads'] . '/uploads/game-' . $this->game;
+        $dbfile = $upload_dir . '/' . $config['dbname'];
+        if (!file_exists($dbfile)) {
+            $body = array('errors' => array('database not found'));
+            return self::response(500, 'Internal Server Error', $body);
+        }
+        $filename = tempnam($upload_dir, 'upload-');
+        if (empty($filename) || !move_uploaded_file($tmp_name, $filename)) {
+            return self::response(507, 'Insufficient Storage');
+        }
+        $dbsource = 'sqlite:' . $dbfile;
         $db = new OrderDB();
         $db->connect($dbsource);
-        if (move_uploaded_file($tmp_name, $filename)) {
-            orders::insert($db, $time, $filename, $lang, $email, 3);
-            echo "orders were received as $filename\n";
-            header('HTTP/1.0 201 Created');
-        }
-        unset($db);
+        $time = new DateTime();
+        $id = orders::insert($db, $time, $filename, $lang, $email, 3);
+        $body = array(
+            'data' => array(
+                'filename' => $filename,
+                'id' => $id,
+            ),
+        );
+        return self::response(201, 'Created', $body);
     }
-    else {
-        header('HTTP/1.0 507 Insufficient Storage');
+}
+
+if (isset($_FILES['input'])) {
+    $tmp_name = $_FILES['input']['tmp_name'];
+    $uploader = new Uploader($config, $game);
+    $response = $uploader->store($tmp_name, $lang, $email);
+    if ($response->status) {
+        $header = 'HTTP/1.0 ' . $status;
+        if ($repsonse->message) {
+            $header .= ' ' . $repsonse->message;
+        }
+        header($header);
+    }
+    $body = $response->body ?? '';
+    if ($format == 'json') {
+        header('Content-Type: application/javascript');
+        if (!is_string($body)) {
+            $body = json_encode($body);
+        }
+    } else {
+        header('Content-Type: text/plain; charset=utf-8');
+    }
+    if (!empty($body)) {
+        echo PHP_EOL . $body;
     }
 }
 else {
     header('HTTP/1.0 400 Bad Request');
-    exit();
 }
