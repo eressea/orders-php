@@ -1,8 +1,0 @@
-ERESSEA enno "passwort"
-PARTEI wiki "drowssap"
-FACTION dead "evilDood" 
-EINHEIT
-NACH\
- O
-NAECHSTER
-

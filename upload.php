@@ -77,8 +77,8 @@ if ($filename) {
     }
     if (isset($filename)) {
         orders::insert($db, $time, $filename, $lang, $email, 3);
-        echo "orders were received as $filename\n";
         header('HTTP/1.0 201 Created');
+        echo "orders were received as $filename\n";
     }
     unset($db);
     if (!empty($g_errno)) {
