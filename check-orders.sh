@@ -48,6 +48,7 @@ orders() {
 }
 
 OUTPUT=$(mktemp)
+[ -d "$ERESSEA/game-$GAME/orders.dir" ] || exit
 cd "$ERESSEA/game-$GAME/orders.dir" || exit
 orders -d orders.db select | while read -r LANGUAGE EMAIL FILENAME ; do
   export LANGUAGE
