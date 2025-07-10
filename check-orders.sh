@@ -47,7 +47,7 @@ orders() {
   php "$DBTOOL_HOME/cli.php" "$@"
 }
 
-OUTPUT=$(mktemp)
+OUTPUT=$(mktemp /tmp/check.XXXXX)
 [ -d "$ERESSEA/game-$GAME/orders.dir" ] || exit
 cd "$ERESSEA/game-$GAME/orders.dir" || exit
 orders -d orders.db select | while read -r LANGUAGE EMAIL FILENAME ; do
@@ -73,3 +73,4 @@ orders -d orders.db select | while read -r LANGUAGE EMAIL FILENAME ; do
   fi
   mutt -s "[E$GAME] $SUBJECT" "$EMAIL" < "$OUTPUT"
 done
+rm -f "$OUTPUT"
