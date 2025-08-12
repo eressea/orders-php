@@ -17,6 +17,7 @@ $g_errno = null;
 set_error_handler(function($errno, $errstr, $errfile, int $errline) {
     print "error $errno in $errfile:$errline, $errstr";
     $g_errno = $errno;
+    return false;
 });
 // TODO: read these from a config file
 $config = [
@@ -35,15 +36,19 @@ $password = filter_input(INPUT_POST, 'password', FILTER_SANITIZE_STRING, FILTER_
 $pwhash = $config['password'];
 
 if (!is_null($pwhash) && !password_verify($password, $pwhash)) {
-    echo "Permission denied\n";
+    error_log("Permission denied");
     header('HTTP/1.0 403 Permission denied');
     exit();
+}
+
+if (!empty($user = $_SERVER['PHP_AUTH_USER'])) {
+    error_log("file upload from user $user");
 }
 
 $upload_dir = $config['uploads'] . '/game-' . $game;
 $dbfile = $upload_dir . '/' . $config['dbname'];
 if (!file_exists($dbfile)) {
-    echo "database not found: $dbfile\n";
+    error_log("database not found: $dbfile");
     exit();
 }
 $dbsource = 'sqlite:' . $dbfile;
@@ -57,7 +62,7 @@ else {
 }
 $encoding = mb_detect_encoding($input, ['ASCII', 'UTF-8'], true);
 if (FALSE === $encoding) {
-    echo "Please convert your file to UTF-8\n";
+    error_log("Please convert your file to UTF-8");
     header('HTTP/1.0 406 Not Acceptable');
     exit();
 }
@@ -78,7 +83,7 @@ if ($filename) {
     if (isset($filename)) {
         orders::insert($db, $time, $filename, $lang, $email, 3);
         header('HTTP/1.0 201 Created');
-        echo "orders were received as $filename\n";
+        error_log("orders were received as $filename");
     }
     unset($db);
     if (!empty($g_errno)) {
