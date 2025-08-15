@@ -38,6 +38,7 @@ $pwhash = $config['password'];
 if (!is_null($pwhash) && !password_verify($password, $pwhash)) {
     error_log("Permission denied");
     header('HTTP/1.0 403 Permission denied');
+    echo "Illegal username or password";
     exit();
 }
 
@@ -49,6 +50,8 @@ $upload_dir = $config['uploads'] . '/game-' . $game;
 $dbfile = $upload_dir . '/' . $config['dbname'];
 if (!file_exists($dbfile)) {
     error_log("database not found: $dbfile");
+    header('HTTP/1.0 500 Internal Server Error');
+    echo "database error. try again later!";
     exit();
 }
 $dbsource = 'sqlite:' . $dbfile;
@@ -62,8 +65,9 @@ else {
 }
 $encoding = mb_detect_encoding($input, ['ASCII', 'UTF-8'], true);
 if (FALSE === $encoding) {
-    error_log("Please convert your file to UTF-8");
+    error_log("Encoding could not be detected");
     header('HTTP/1.0 406 Not Acceptable');
+    echo "Please convert your file to UTF-8";
     exit();
 }
 $filename = tempnam($upload_dir . '/uploads', 'upload-');
@@ -82,8 +86,9 @@ if ($filename) {
     }
     if (isset($filename)) {
         orders::insert($db, $time, $filename, $lang, $email, 3);
-        header('HTTP/1.0 201 Created');
         error_log("orders were received as $filename");
+        header('HTTP/1.0 201 Created');
+        echo "orders were received as $filename";
     }
     unset($db);
     if (!empty($g_errno)) {
