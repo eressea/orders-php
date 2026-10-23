@@ -32,7 +32,7 @@ header('Content-Type: text/plain; charset=utf-8');
 $email = NULL;
 $game = filter_input(INPUT_POST, 'game', FILTER_VALIDATE_INT, ['options' => ['default' => $config['game'], 'min_range' => 1]]);
 $lang = htmlspecialchars(filter_input(INPUT_POST, 'lang', FILTER_DEFAULT, ['options' => ['default' => $config['lang'], 'flags' => FILTER_REQUIRE_SCALAR]]));
-$password = htmlspecialchars(filter_input(INPUT_POST, 'password', FILTER_DEFAULT, FILTER_REQUIRE_SCALAR));
+$password = filter_input(INPUT_POST, 'password', FILTER_DEFAULT, FILTER_REQUIRE_SCALAR);
 $pwhash = $config['password'];
 
 if (!is_null($pwhash) && !password_verify($password, $pwhash)) {

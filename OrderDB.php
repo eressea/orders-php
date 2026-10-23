@@ -45,7 +45,7 @@ class OrderDB {
     public function connect(string $dbsource) {
         $this->pdo = new PDO($dbsource);
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $this->update();
+        // $this->update();
     }
     
     public function getFiles() : array {
