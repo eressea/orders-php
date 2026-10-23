@@ -33,7 +33,7 @@ class OrderDB {
             for ($v = $version; $v != self::SCHEMA_VERSION; $v++) {
                 $filename = __DIR__ . '/schema/sqlite-' . (1 + $v) . '.sql';
                 $schema = file_get_contents($filename);
-                if ($schema == FALSE) {
+                if ($schema == false) {
                     echo "cannot update schema from version $version to " . self::SCHEMA_VERSION . PHP_EOL;
                     break;
                 }
@@ -74,17 +74,17 @@ class OrderDB {
             return $row;
         }
         $this->pdo->rollback();
-        return FALSE;
+        return false;
     }
     
-    public function addFile(DateTimeInterface $time, string $filename, string $lang, string $email = NULL, int $status = 0): int {
+    public function addFile(DateTimeInterface $time, string $filename, string $lang, ?string $email = NULL, int $status = 0): int|false {
         $datetime = gmdate('Y-m-d H:i:s', $time->format('U'));
         if (is_null($this->stmtInsert)) {
             $this->stmtInsert = $this->pdo->prepare("INSERT INTO `submission` (`filename`, `time`, `language`, `email`, `status`) VALUES (?, ?, ?, ?, ?)");
         }
         if ($this->stmtInsert->execute([$filename, $datetime, $lang, $email, $status]) !== TRUE) {
-            return FALSE;
+            return false;
         }
-        return $this->pdo->lastInsertId();
+        return (int) $this->pdo->lastInsertId();
     }
 }

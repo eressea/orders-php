@@ -12,7 +12,7 @@ require_once __DIR__ . '/parser.php';
 define('REGEXP_FACTION', '/^\s*(ERESSEA|PARTEI)\s+(\w+)\s+"?([^\s"]+)"?/i');
 
 class cli {
-    public static function insert(OrderDB $db, string $filename, DateTimeInterface $time, string $lang, string $email = NULL) {
+    public static function insert(OrderDB $db, string $filename, DateTimeInterface $time, string $lang, ?string $email = NULL) {
         orders::insert($db, $time, $filename, $lang, $email);
     }
     
