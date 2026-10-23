@@ -1,0 +1,7 @@
+{
+    "require-dev": {
+        "phan/phan": "^6.0",
+        "phpstan/phpstan": "^2.3",
+        "overtrue/phplint": "^9.8"
+    }
+}

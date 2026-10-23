@@ -3,3 +3,4 @@ nbproject/private/
 orders.db
 *.mo
 locale
+vendor/
